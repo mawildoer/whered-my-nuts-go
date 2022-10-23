@@ -1,0 +1,3 @@
+[submodule "lib/VescUart"]
+	path = lib/VescUart
+	url = https://github.com/SolidGeek/VescUart.git
