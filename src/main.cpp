@@ -11,19 +11,20 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire1);
 const float current_limit = 50.0;
 const float current_gain = 3.0;
 
-const int safety_pin = 5;
+const int safety_bias_pin = 11;
+const int safety_feedback_pin = 9;
 
 bool tag_in_place() {
-  return digitalRead(safety_pin) == HIGH;
+  return digitalRead(safety_feedback_pin) == HIGH;
 }
 
 void setup(void)
 {
   // pin configuration
 
-  pinMode(safety_pin, INPUT_PULLDOWN);
-  pinMode(6, OUTPUT);
-  digitalWrite(6, HIGH);
+  pinMode(safety_feedback_pin, INPUT_PULLDOWN);
+  pinMode(safety_bias_pin, OUTPUT);
+  digitalWrite(safety_bias_pin, HIGH);
 
   // StemmaQT / Quuic Connector Pin Selection
   Wire1.setSDA(2);
