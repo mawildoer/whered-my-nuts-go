@@ -8,11 +8,14 @@ VescUart VESC;
 uint16_t UPDATE_PERIOD_MS = 10;
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire1);
 
-const float current_limit = 50.0;
-const float current_gain = 3.0;
+const float current_limit = 10.0;
+const float current_gain = 1.0;
+const float damping = 3;
+float last_current = 0;
+float current = 0;
 
-const int safety_bias_pin = 11;
-const int safety_feedback_pin = 9;
+const int safety_bias_pin = 7;
+const int safety_feedback_pin = 8;
 
 bool tag_in_place() {
   return digitalRead(safety_feedback_pin) == HIGH;
@@ -52,11 +55,13 @@ void setup(void)
 
   Serial.println("Setup Successful!");
   delay(1000); // see if waiting for the VESC to come up helps
+  Serial.println("hopefully the vesc is working now?");
 
   while (tag_in_place()) {
     Serial.println("unplug safety tag");
     delay(1000);
   }
+
   while (!tag_in_place()) {
     Serial.println("replace safety tag");
     delay(1000);
@@ -107,8 +112,15 @@ void loop(void)
 
   printOrientation(&orientationData); // debug print out
 
+  
   // Control loop
-  float current = orientationData.orientation.z * current_gain;
+  if(orientationData.orientation.z > 0){
+    current = -(180 - orientationData.orientation.z) * current_gain + (last_current - current) * damping;
+  } else{
+    current = (180 + orientationData.orientation.z) * current_gain - (last_current - current) * damping;
+  }
+  last_current = current;
+  
 
   // Current Limit
   if (current > current_limit) {
@@ -118,7 +130,7 @@ void loop(void)
   }
 
   // Fall-over detection
-  if (max(abs(orientationData.orientation.y), abs(orientationData.orientation.z)) > 30)
+  if (abs(orientationData.orientation.y) > 30 || abs(orientationData.orientation.z) < 150)
   {
     current = 0;
   }
